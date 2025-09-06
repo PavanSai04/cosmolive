@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CosmosLive - Real-time Space & Earth Data Explorer</title>
+    <meta name="description" content="Track ISS location, monitor earthquakes, explore NASA imagery, follow SpaceX launches, and discover ISRO missions - all in real-time!">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="keywords" content="space data, ISS tracker, earthquake monitor, NASA images, SpaceX launches, ISRO missions, satellite tracking">
+    <meta name="author" content="CosmosLive">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://cosmoslive.space/">
+    <meta property="og:title" content="CosmosLive - Real-time Space & Earth Data">
+    <meta property="og:description" content="Your ultimate hub for live space missions, earthquake monitoring, and cosmic discoveries">
+    <meta property="og:image" content="https://cosmoslive.space/preview.jpg">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://cosmoslive.space/">
+    <meta property="twitter:title" content="CosmosLive - Space & Earth Science Hub">
+    <meta property="twitter:description" content="Track ISS, monitor earthquakes, explore NASA imagery in real-time!">
+    <meta property="twitter:image" content="https://cosmoslive.space/preview.jpg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚀</text></svg>">
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="/style.css" as="style">
+    <link rel="preload" href="/main.js" as="script">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-content">
+            <div class="nav-brand">🚀 CosmosLive</div>
+            <ul class="nav-links">
+                <li><a href="#nasa-apod">NASA APOD</a></li>
+                <li><a href="#missions">Missions</a></li>
+                <li><a href="#live-missions">Live Missions</a></li>
+                <li><a href="#iss">ISS Tracker</a></li>
+                <li><a href="#earthquakes">Earth Monitor</a></li>
+                <li><a href="#launches">Launches</a></li>
+                <li><a href="#imagery">Imagery</a></li>
+            </ul>
+            <div class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="hero-badge">🌟 Live Data • Real-time Updates</div>
+        <h1 class="hero-title">CosmosLive</h1>
+        <p class="hero-subtitle">
+            Your ultimate destination for real-time space missions, earthquake monitoring, 
+            satellite tracking, and cosmic discoveries. Explore the universe from your browser.
+        </p>
+
+        <div class="live-stats" id="liveStats">
+            <div class="stats-grid">
+                <div class="stat-card" onclick="app.showLaunches()">
+                    <div class="stat-number" id="spacex-launches-count">-</div>
+                    <div class="stat-label">SpaceX Launches</div>
+                </div>
+                <div class="stat-card" onclick="app.showISSTracker()">
+                    <div class="stat-number" id="iss-astronauts-count">-</div>
+                    <div class="stat-label">ISS Astronauts</div>
+                </div>
+                <div class="stat-card" onclick="app.showEarthquakes()">
+                    <div class="stat-number" id="earthquake-count">-</div>
+                    <div class="stat-label">Recent Earthquakes</div>
+                </div>
+                <div class="stat-card" onclick="app.showSatellites()">
+                    <div class="stat-number" id="tracked-satellites">2,800+</div>
+                    <div class="stat-label">Tracked Satellites</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation-tiles" id="navigationTiles">
+            <div class="navigation-grid">
+                <div class="nav-tile" onclick="app.showSpaceXAPI()">
+                    <span class="nav-tile-text">SpaceX API</span>
+                </div>
+                <div class="nav-tile active" onclick="app.showISSTracker()">
+                    <span class="nav-tile-text">ISS Tracker</span>
+                </div>
+                <div class="nav-tile" onclick="app.showNASAAPI()">
+                    <span class="nav-tile-text">NASA API</span>
+                </div>
+                <div class="nav-tile" onclick="app.showEarthquakes()">
+                    <span class="nav-tile-text">Earthquake Data</span>
+                </div>
+                <div class="nav-tile" onclick="app.showLaunchLibrary()">
+                    <span class="nav-tile-text">Launch Library</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="api-status-bar" id="apiStatusBar">
+            <div class="api-status-grid">
+                <div class="api-status-item">
+                    <span class="api-status-dot" id="spacex-status"></span>
+                    <span class="api-status-label">SpaceX API</span>
+                </div>
+                <div class="api-status-item">
+                    <span class="api-status-dot" id="iss-status-indicator"></span>
+                    <span class="api-status-label">ISS API</span>
+                </div>
+                <div class="api-status-item">
+                    <span class="api-status-dot" id="earthquake-status"></span>
+                    <span class="api-status-label">Earthquake API</span>
+                </div>
+                <div class="api-status-item">
+                    <span class="api-status-dot" id="launch-status"></span>
+                    <span class="api-status-label">Launch API</span>
+                </div>
+                <div class="api-status-item">
+                    <span class="api-status-dot" id="nasa-status"></span>
+                    <span class="api-status-label">NASA API</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- NASA Picture of the Day Section -->
+    <section class="nasa-apod-section" id="nasa-apod">
+        <div class="nasa-apod-container">
+            <div class="nasa-apod-content">
+                <div class="nasa-apod-text">
+                    <div class="nasa-apod-badge">NASA PICTURE OF THE DAY</div>
+                    <h2 class="nasa-apod-title">
+                        <span class="title-line" id="nasa-apod-daily-title">Loading...</span>
+                    </h2>
+                    <div class="nasa-apod-description">
+                        <p id="nasa-apod-daily-explanation">Loading NASA's daily astronomy picture and explanation...</p>
+                    </div>
+                </div>
+                <div class="nasa-apod-image">
+                    <div class="nasa-apod-image-container">
+                        <img id="nasa-apod-daily-image" src="" alt="NASA Picture of the Day" />
+                        <div class="nasa-apod-overlay">
+                            <div class="nasa-apod-info">
+                                <p id="nasa-apod-daily-date">Loading...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- AQF Astrophysics Quotes and Facts Section -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="testimonials-container">
+            <h2 class="testimonials-title">AQF Astrophysics Quotes and Facts</h2>
+            <div class="testimonials-content">
+                <div class="testimonials-slider">
+                    <div class="testimonial-slide">
+                        <p class="testimonial-quote">"The cosmos is within us. We are made of star-stuff. We are a way for the universe to know itself."</p>
+                        <div class="testimonial-author">
+                            <p class="author-name">Carl Sagan</p>
+                            <p class="author-company">Astrophysicist & Science Communicator</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-slide">
+                        <p class="testimonial-quote">"The universe is not only queerer than we suppose, but queerer than we can suppose."</p>
+                        <div class="testimonial-author">
+                            <p class="author-name">J.B.S. Haldane</p>
+                            <p class="author-company">Biologist & Geneticist</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-slide">
+                        <p class="testimonial-quote">"Two things are infinite: the universe and human stupidity; and I'm not sure about the universe."</p>
+                        <div class="testimonial-author">
+                            <p class="author-name">Albert Einstein</p>
+                            <p class="author-company">Theoretical Physicist</p>
+                        </div>
+                    </div>
+                    <div class="testimonial-slide">
+                        <p class="testimonial-quote">"The most incomprehensible thing about the universe is that it is comprehensible."</p>
+                        <div class="testimonial-author">
+                            <p class="author-name">Albert Einstein</p>
+                            <p class="author-company">Theoretical Physicist</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonials-pagination">
+                <div class="pagination-dot"></div>
+                <div class="pagination-dot"></div>
+                <div class="pagination-dot"></div>
+                <div class="pagination-dot"></div>
+            </div>
+        </div>
+    </section>
+    <!-- Missions Section -->
+    <section class="missions-section" id="missions">
+        <div class="missions-container">
+            <h2 class="missions-title">🚀 Space Missions</h2>
+            <div class="missions-grid" id="missionsGrid">
+                <!-- Mission tiles will be dynamically loaded here -->
+            </div>
+            <div class="missions-actions">
+                <button class="more-missions-btn" id="moreMissionsBtn">More Missions</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <section class="section-one" id="live-missions">
+            <h2 class="section-title">🚀 Live Space Missions</h2>
+            <div class="data-grid">
+                <div class="data-card launch-highlight">
+                    <div class="card-title">SpaceX Mission Status</div>
+                    <div class="card-content" id="spacex-company-info">
+                        <p><strong>Company:</strong> <span id="spacex-name">Loading...</span></p>
+                        <p><strong>Founded:</strong> <span id="spacex-founded">Loading...</span></p>
+                        <p><strong>CEO:</strong> <span id="spacex-ceo">Loading...</span></p>
+                        <p><strong>Employees:</strong> <span id="spacex-employees">Loading...</span></p>
+                        <p><strong>Valuation:</strong> <span id="spacex-valuation">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="data-card launch-highlight">
+                    <div class="card-title">Latest SpaceX Launch</div>
+                    <div class="card-content" id="spacex-latest-launch">
+                        <p><strong>Mission:</strong> <span id="latest-mission-name">Loading...</span></p>
+                        <p><strong>Date:</strong> <span id="latest-launch-date">Loading...</span></p>
+                        <p><strong>Rocket:</strong> <span id="latest-rocket">Loading...</span></p>
+                        <p><strong>Status:</strong> <span id="latest-launch-status">Loading...</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="iss">
+            <h2 class="section-title">🛰️ ISS Tracker</h2>
+            <div class="data-grid">
+                <div class="data-card iss-tracker">
+                    <div class="card-title">Current ISS Position</div>
+                    <div class="card-content" id="iss-position-info">
+                        <p><strong>Status:</strong> <span id="iss-status">Loading...</span></p>
+                        <p><strong>Crew:</strong> <span id="iss-crew-count">Loading...</span> astronauts</p>
+                        <p><strong>Latitude:</strong> <span id="iss-latitude">Loading...</span></p>
+                        <p><strong>Longitude:</strong> <span id="iss-longitude">Loading...</span></p>
+                        <p><strong>Altitude:</strong> <span id="iss-altitude">Loading...</span> km</p>
+                        <p><strong>Velocity:</strong> <span id="iss-velocity">Loading...</span> km/s</p>
+                        <p><strong>Last Update:</strong> <span id="iss-timestamp">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="data-card iss-tracker">
+                    <div class="card-title">Current ISS Crew</div>
+                    <div class="card-content" id="iss-crew-info">
+                        <div id="crew-list">Loading crew information...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="earthquakes">
+            <h2 class="section-title">🌍 Earth Monitor</h2>
+            <div class="data-grid">
+                <div class="data-card earthquake-alert">
+                    <div class="card-title">Recent Earthquakes (Last 7 Days)</div>
+                    <div class="card-content" id="earthquake-info">
+                        <p><strong>Monitoring:</strong> Global seismic activity (Magnitude 4.0+)</p>
+                        <p><strong>Total Count:</strong> <span id="earthquake-total-count">Loading...</span></p>
+                        <p><strong>Last Update:</strong> <span id="earthquake-last-update">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="data-card earthquake-alert">
+                    <div class="card-title">Recent Significant Earthquakes</div>
+                    <div class="card-content" id="recent-earthquakes-list">
+                        <div id="earthquake-list">Loading recent earthquakes...</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="launches">
+            <h2 class="section-title">🚀 Launch Schedule</h2>
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="card-title">Upcoming Launches</div>
+                    <div class="card-content" id="upcoming-launches-info">
+                        <p><strong>Next Launch:</strong> <span id="next-launch-name">Loading...</span></p>
+                        <p><strong>Provider:</strong> <span id="next-launch-provider">Loading...</span></p>
+                        <p><strong>Date:</strong> <span id="next-launch-date">Loading...</span></p>
+                        <p><strong>Status:</strong> <span id="next-launch-status">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="data-card">
+                    <div class="card-title">Launch Statistics</div>
+                    <div class="card-content" id="launch-stats-info">
+                        <p><strong>Year:</strong> <span id="launch-year">Loading...</span></p>
+                        <p><strong>Upcoming:</strong> <span id="launch-upcoming-count">Loading...</span></p>
+                        <p><strong>Completed:</strong> <span id="launch-completed-count">Loading...</span></p>
+                        <p><strong>Total:</strong> <span id="launch-total-count">Loading...</span></p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="imagery">
+            <h2 class="section-title">🖼️ NASA Imagery</h2>
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="card-title">NASA Astronomy Picture of the Day</div>
+                    <div class="card-content" id="nasa-apod-info">
+                        <p><strong>Title:</strong> <span id="apod-title">Loading...</span></p>
+                        <p><strong>Date:</strong> <span id="apod-date">Loading...</span></p>
+                        <p><strong>Copyright:</strong> <span id="apod-copyright">Loading...</span></p>
+                        <p><strong>Explanation:</strong> <span id="apod-explanation">Loading...</span></p>
+                    </div>
+                </div>
+                <div class="data-card">
+                    <div class="card-title">APOD Image</div>
+                    <div class="card-content" id="nasa-apod-image">
+                        <div id="apod-image-container">
+                            <img id="apod-image" src="" alt="NASA APOD" style="max-width: 100%; height: auto; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="#about">About</a>
+                <a href="#privacy">Privacy</a>
+                <a href="#api">API Status</a>
+                <a href="#contact">Contact</a>
+                <a href="https://github.com/yourusername/cosmoslive" target="_blank">GitHub</a>
+            </div>
+            <p style="opacity: 0.7; margin-bottom: 1rem;">
+                Data sources: SpaceX API • Open Notify • NASA API • USGS • Launch Library • ISRO
+            </p>
+            <p style="opacity: 0.5; font-size: 0.9rem;">
+                Built with ❤️ for space enthusiasts worldwide • Last updated: <span id="lastUpdate">-</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="./main.js"></script>
+    <script>
+        // Simple app object for navigation (compatible with main.js)
+        window.app = {
+            showLaunches: function() {
+                document.getElementById('launches').scrollIntoView({ behavior: 'smooth' });
+            },
+            showISSTracker: function() {
+                document.getElementById('iss').scrollIntoView({ behavior: 'smooth' });
+            },
+            showEarthquakes: function() {
+                document.getElementById('earthquakes').scrollIntoView({ behavior: 'smooth' });
+            },
+            showSpaceXAPI: function() {
+                document.getElementById('launches').scrollIntoView({ behavior: 'smooth' });
+            },
+            showNASAAPI: function() {
+                document.getElementById('nasa-apod').scrollIntoView({ behavior: 'smooth' });
+            },
+            showLaunchLibrary: function() {
+                document.getElementById('launches').scrollIntoView({ behavior: 'smooth' });
+            },
+            showSatellites: function() {
+                document.getElementById('iss').scrollIntoView({ behavior: 'smooth' });
+            }
+        };
+    </script>
+</body>
+</html>
