@@ -136,6 +136,9 @@ class CosmosLiveApp {
         if (apodImage && apodData.url) {
           apodImage.src = apodData.url;
           apodImage.alt = apodData.title || 'NASA Picture of the Day';
+          apodImage.onerror = function() {
+            this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f3f4f6"/><text x="200" y="150" text-anchor="middle" fill="%236b7280" font-family="Arial" font-size="16">NASA Picture of the Day</text></svg>';
+          };
         }
         
         if (apodTitle) {
@@ -203,7 +206,7 @@ class CosmosLiveApp {
         apodDate.textContent = 'Unavailable';
       }
     }
-    }
+  }
 
   async loadMissionsSection() {
     try {
@@ -345,7 +348,7 @@ class CosmosLiveApp {
     const mission = this.allMissions.find(m => m.id === missionId);
     if (!mission) return;
 
-    // Create modal or expand the tile
+    // Create modal
     const modal = document.createElement('div');
     modal.className = 'mission-modal';
     modal.innerHTML = `
@@ -464,13 +467,18 @@ class CosmosLiveApp {
 
   async updateStats() {
     try {
-      // ISS Astronauts - Use backend API
+      // ISS Astronauts
       try {
         const data = await apiClient.getISSAstronauts();
         if (data && data.number) {
           const issElement = document.getElementById('iss-astronauts');
           if (issElement) {
             issElement.textContent = data.number;
+          }
+          // Also update the stats in hero section
+          const issStatsElement = document.getElementById('iss-astronauts-count');
+          if (issStatsElement) {
+            issStatsElement.textContent = data.number;
           }
         }
       } catch (error) {
@@ -479,15 +487,23 @@ class CosmosLiveApp {
         if (issElement) {
           issElement.textContent = '7'; // Fallback value
         }
+        const issStatsElement = document.getElementById('iss-astronauts-count');
+        if (issStatsElement) {
+          issStatsElement.textContent = '7';
+        }
       }
 
-      // SpaceX Launches - Try backend first, then fallback
+      // SpaceX Launches
       try {
         const spacexData = await apiClient.getSpaceXRockets();
         if (spacexData && Array.isArray(spacexData)) {
           const spacexElement = document.getElementById('spacex-launches');
           if (spacexElement) {
             spacexElement.textContent = spacexData.length;
+          }
+          const spacexStatsElement = document.getElementById('spacex-launches-count');
+          if (spacexStatsElement) {
+            spacexStatsElement.textContent = spacexData.length;
           }
         }
       } catch (error) {
@@ -496,9 +512,13 @@ class CosmosLiveApp {
         if (spacexElement) {
           spacexElement.textContent = '4'; // Fallback value
         }
+        const spacexStatsElement = document.getElementById('spacex-launches-count');
+        if (spacexStatsElement) {
+          spacexStatsElement.textContent = '4';
+        }
       }
 
-      // Recent Earthquakes - Try USGS API first, then backend, then fallback
+      // Recent Earthquakes
       try {
         const earthquakeCount = await this.getEarthquakeCount(4.0, 7);
         
@@ -511,7 +531,7 @@ class CosmosLiveApp {
           throw new Error('No USGS data');
         }
       } catch (usgsError) {
-        console.log('USGS API not available, trying backend');
+        console.log('USGS API not available, using fallback');
         try {
           const earthquakeData = await apiClient.getEarthquakes();
           if (earthquakeData && earthquakeData.features) {
@@ -522,8 +542,8 @@ class CosmosLiveApp {
           } else {
             throw new Error('No backend data');
           }
-        } catch (backendError) {
-          console.log('All earthquake APIs not available, using fallback');
+        } catch (fallbackError) {
+          console.log('Earthquake APIs not available, using fallback');
           const earthquakeElement = document.getElementById('earthquake-count');
           if (earthquakeElement) {
             earthquakeElement.textContent = '12'; // Fallback value
@@ -541,8 +561,9 @@ class CosmosLiveApp {
       console.error('Error updating stats:', error);
       // Set fallback values if everything fails
       const elements = {
-        'spacex-launches': '4',
+        'spacex-launches-count': '4',
         'iss-astronauts': '7',
+        'iss-astronauts-count': '7',
         'earthquake-count': '12',
         'tracked-satellites': '2,800+'
       };
@@ -557,118 +578,56 @@ class CosmosLiveApp {
   }
 
   async loadMainContent() {
-    const mainContent = document.getElementById('mainContent');
-    if (!mainContent) return;
-
-    const contentHTML = `
-      <section class="section" id="missions">
-        <h2 class="section-title">🚀 Live Space Missions</h2>
-        <div class="data-grid" id="missions-grid">
-          <div class="loading">Loading mission data...</div>
-        </div>
-      </section>
-
-      <section class="section" id="iss">
-        <h2 class="section-title">🛰️ ISS Tracker</h2>
-        <div class="data-grid" id="iss-grid">
-          <div class="loading">Loading ISS data...</div>
-        </div>
-      </section>
-
-      <section class="section" id="earthquakes">
-        <h2 class="section-title">🌍 Earth Monitor</h2>
-        <div class="data-grid" id="earthquake-grid">
-          <div class="loading">Loading earthquake data...</div>
-        </div>
-      </section>
-
-      <section class="section" id="launches">
-        <h2 class="section-title">🚀 Launch Schedule</h2>
-        <div class="data-grid" id="launch-grid">
-          <div class="loading">Loading launch data...</div>
-        </div>
-      </section>
-
-      <section class="section" id="imagery">
-        <h2 class="section-title">🖼️ NASA Imagery</h2>
-        <div class="data-grid" id="imagery-grid">
-          <div class="loading">Loading NASA imagery...</div>
-        </div>
-      </section>
-    `;
-
-    mainContent.innerHTML = contentHTML;
-
     // Load data for each section
-    await this.loadMissionsData();
+    await this.loadLiveMissionsData();
     await this.loadISSData();
     await this.loadEarthquakeData();
     await this.loadLaunchData();
     await this.loadImageryData();
   }
 
-  async loadMissionsData() {
-    const container = document.getElementById('missions-grid');
+  async loadLiveMissionsData() {
+    const container = document.getElementById('spacex-company-info');
     if (!container) return;
 
     try {
-      const [spacexData, issData] = await Promise.all([
-        apiClient.getSpaceXCompany(),
-        apiClient.getISSAstronauts()
-      ]);
+      const spacexData = await apiClient.getSpaceXCompany();
 
-      let html = '';
-      
       if (spacexData) {
-        html += `
-          <div class="data-card launch-highlight">
-            <div class="card-title">SpaceX Mission Status</div>
-            <div class="card-content">
-              <p><strong>Company:</strong> ${spacexData.name || 'SpaceX'}</p>
-              <p><strong>Founded:</strong> ${spacexData.founded || '2002'}</p>
-              <p><strong>Employees:</strong> ${spacexData.employees || 'N/A'}</p>
-              <p><strong>CEO:</strong> ${spacexData.ceo || 'Elon Musk'}</p>
-            </div>
-          </div>
-        `;
+        document.getElementById('spacex-name').textContent = spacexData.name || 'SpaceX';
+        document.getElementById('spacex-founded').textContent = spacexData.founded || '2002';
+        document.getElementById('spacex-employees').textContent = spacexData.employees || 'N/A';
+        document.getElementById('spacex-ceo').textContent = spacexData.ceo || 'Elon Musk';
+        document.getElementById('spacex-valuation').textContent = spacexData.valuation ? `$${spacexData.valuation}B` : 'N/A';
       }
 
-      if (issData && issData.people) {
-        html += `
-          <div class="data-card iss-tracker">
-            <div class="card-title">ISS Crew</div>
-            <div class="card-content">
-              <p><strong>Crew Members:</strong> ${issData.number}</p>
-              <p><strong>Current Crew:</strong></p>
-              <ul>
-                ${issData.people.map(person => `<li>${person.name} (${person.craft})</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        `;
+      // Load latest launch data
+      const latestLaunch = await apiClient.getLatestLaunch();
+      if (latestLaunch) {
+        document.getElementById('latest-mission-name').textContent = latestLaunch.name || 'N/A';
+        document.getElementById('latest-launch-date').textContent = latestLaunch.date_local ? new Date(latestLaunch.date_local).toLocaleDateString() : 'N/A';
+        document.getElementById('latest-rocket').textContent = latestLaunch.rocket?.name || 'N/A';
+        document.getElementById('latest-launch-status').textContent = latestLaunch.success ? 'Success ✅' : 'Failed ❌';
       }
 
-      container.innerHTML = html || '<div class="error">Unable to load mission data</div>';
 
     } catch (error) {
-      console.error('Error loading missions data:', error);
-      container.innerHTML = '<div class="error">Error loading mission data</div>';
+      console.error('Error loading live missions data:', error);
     }
   }
 
   async loadISSData() {
-    const container = document.getElementById('iss-grid');
-    if (!container) return;
+    const positionContainer = document.getElementById('iss-position-info');
+    const crewContainer = document.getElementById('iss-crew-info');
+    if (!positionContainer || !crewContainer) return;
 
     try {
-      // Use backend API endpoints from iss.js
       const [locationResponse, astronautsResponse, detailsResponse] = await Promise.all([
         apiClient.getISSLocation().catch(() => null),
         apiClient.getISSAstronauts().catch(() => null),
         apiClient.getISSDetails().catch(() => null)
       ]);
 
-      let html = '';
 
       // ISS Location and Details
       if (locationResponse && locationResponse.iss_position) {
@@ -676,129 +635,102 @@ class CosmosLiveApp {
         const lon = parseFloat(locationResponse.iss_position.longitude).toFixed(4);
         const timestamp = new Date(locationResponse.timestamp * 1000).toLocaleString();
         
-        html += `
-          <div class="data-card iss-tracker">
-            <div class="card-title">Current ISS Position</div>
-            <div class="card-content">
-              <p><strong>Status:</strong> Currently in orbit</p>
-              <p><strong>Latitude:</strong> ${lat}°</p>
-              <p><strong>Longitude:</strong> ${lon}°</p>
-              <p><strong>Altitude:</strong> ${detailsResponse?.altitude || '408'} km</p>
-              <p><strong>Velocity:</strong> ${detailsResponse?.orbital_speed || '7.66'} km/s</p>
-              <p><strong>Last Update:</strong> ${timestamp}</p>
-            </div>
-          </div>
-        `;
+        document.getElementById('iss-status').textContent = 'Currently in orbit';
+        document.getElementById('iss-latitude').textContent = `${lat}°`;
+        document.getElementById('iss-longitude').textContent = `${lon}°`;
+        document.getElementById('iss-altitude').textContent = `${detailsResponse?.altitude || '408'} km`;
+        document.getElementById('iss-velocity').textContent = `${detailsResponse?.orbital_speed || '7.66'} km/s`;
+        document.getElementById('iss-timestamp').textContent = timestamp;
       }
 
       // ISS Astronauts
       if (astronautsResponse && astronautsResponse.people) {
         const issCrew = astronautsResponse.people.filter(person => person.craft === 'ISS');
-        html += `
-          <div class="data-card iss-tracker">
-            <div class="card-title">Current ISS Crew</div>
-            <div class="card-content">
-              <p><strong>Crew Members:</strong> ${astronautsResponse.number} astronauts</p>
-              <p><strong>Current Crew:</strong></p>
-              <ul>
-                ${issCrew.map(person => `<li><strong>${person.name}</strong> - ${person.craft}</li>`).join('')}
-              </ul>
-            </div>
-          </div>
-        `;
+        
+        document.getElementById('iss-crew-count').textContent = `${astronautsResponse.number}`;
+        
+        const crewListHTML = issCrew.map(person => 
+          `<div class="crew-member"><strong>${person.name}</strong> - ${person.craft}</div>`
+        ).join('');
+        
+        document.getElementById('crew-list').innerHTML = crewListHTML || 'Loading crew information...';
       }
 
-      // Fallback if APIs fail
-      if (!html) {
-        html = `
-          <div class="data-card iss-tracker">
-            <div class="card-title">ISS Information</div>
-            <div class="card-content">
-              <p><strong>Status:</strong> Currently in orbit</p>
-              <p><strong>Crew:</strong> 7 astronauts</p>
-              <p><strong>Orbit:</strong> ~408 km altitude</p>
-              <p><strong>Speed:</strong> ~27,600 km/h</p>
-            </div>
-          </div>
-        `;
-      }
-
-      container.innerHTML = html;
 
     } catch (error) {
       console.error('Error loading ISS data:', error);
-      container.innerHTML = `
-        <div class="data-card iss-tracker">
-          <div class="card-title">ISS Information</div>
-          <div class="card-content">
-            <p><strong>Status:</strong> Currently in orbit</p>
-            <p><strong>Crew:</strong> 7 astronauts</p>
-            <p><strong>Orbit:</strong> ~408 km altitude</p>
-            <p><strong>Speed:</strong> ~27,600 km/h</p>
-          </div>
-        </div>
-      `;
+      // Set fallback values
+      document.getElementById('iss-status').textContent = 'Currently in orbit';
+      document.getElementById('iss-crew-count').textContent = '7';
+      document.getElementById('crew-list').innerHTML = 'Unable to load crew information';
     }
   }
 
   async loadEarthquakeData() {
-    const container = document.getElementById('earthquake-grid');
-    if (!container) return;
+    const infoContainer = document.getElementById('earthquake-info');
+    const listContainer = document.getElementById('recent-earthquakes-list');
+    if (!infoContainer || !listContainer) return;
 
     try {
-      // Try USGS API first using utility method
       const earthquakeData = await this.getRecentEarthquakes(4.0, 10);
       
       if (earthquakeData && earthquakeData.features) {
         const recentEarthquakes = earthquakeData.features.slice(0, 5);
         
-        let html = '';
+        // Update earthquake info
+        document.getElementById('earthquake-total-count').textContent = earthquakeData.features.length;
+        document.getElementById('earthquake-last-update').textContent = new Date().toLocaleString();
+        
+        // Update earthquake list
+        let listHTML = '';
         recentEarthquakes.forEach(quake => {
           const magnitude = quake.properties.mag || 'N/A';
           const place = quake.properties.place || 'Unknown location';
           const time = new Date(quake.properties.time).toLocaleString();
           const depth = quake.geometry.coordinates[2] || 'N/A';
           
-          html += `
-            <div class="data-card earthquake-alert">
-              <div class="card-title">Magnitude ${magnitude}</div>
-              <div class="card-content">
-                <p><strong>Location:</strong> ${place}</p>
-                <p><strong>Time:</strong> ${time}</p>
-                <p><strong>Depth:</strong> ${depth} km</p>
-                <p><strong>Type:</strong> ${quake.properties.type || 'Earthquake'}</p>
+          listHTML += `
+            <div class="earthquake-item">
+              <div class="earthquake-magnitude">M${magnitude}</div>
+              <div class="earthquake-details">
+                <div class="earthquake-location">${place}</div>
+                <div class="earthquake-time">${time}</div>
+                <div class="earthquake-depth">Depth: ${depth} km</div>
               </div>
             </div>
           `;
         });
         
-        container.innerHTML = html;
+        document.getElementById('earthquake-list').innerHTML = listHTML;
       } else {
-        // Fallback to backend API
+        // Fallback
         try {
           const backendData = await apiClient.getEarthquakes();
           if (backendData && backendData.features) {
             const recentEarthquakes = backendData.features.slice(0, 5);
             
-            let html = '';
+            document.getElementById('earthquake-total-count').textContent = backendData.features.length;
+            document.getElementById('earthquake-last-update').textContent = new Date().toLocaleString();
+            
+            let listHTML = '';
             recentEarthquakes.forEach(quake => {
               const magnitude = quake.properties.mag;
               const place = quake.properties.place;
               const time = new Date(quake.properties.time).toLocaleString();
               
-              html += `
-                <div class="data-card earthquake-alert">
-                  <div class="card-title">Magnitude ${magnitude}</div>
-                  <div class="card-content">
-                    <p><strong>Location:</strong> ${place}</p>
-                    <p><strong>Time:</strong> ${time}</p>
-                    <p><strong>Depth:</strong> ${quake.geometry.coordinates[2]} km</p>
+              listHTML += `
+                <div class="earthquake-item">
+                  <div class="earthquake-magnitude">M${magnitude}</div>
+                  <div class="earthquake-details">
+                    <div class="earthquake-location">${place}</div>
+                    <div class="earthquake-time">${time}</div>
+                    <div class="earthquake-depth">Depth: ${quake.geometry.coordinates[2]} km</div>
                   </div>
                 </div>
               `;
             });
             
-            container.innerHTML = html;
+            document.getElementById('earthquake-list').innerHTML = listHTML;
           } else {
             throw new Error('No earthquake data available');
           }
@@ -809,23 +741,16 @@ class CosmosLiveApp {
 
     } catch (error) {
       console.error('Error loading earthquake data:', error);
-      container.innerHTML = `
-        <div class="data-card earthquake-alert">
-          <div class="card-title">Earthquake Monitoring</div>
-          <div class="card-content">
-            <p><strong>Status:</strong> Monitoring global seismic activity</p>
-            <p><strong>Source:</strong> USGS Earthquake API</p>
-            <p><strong>Last Update:</strong> Real-time</p>
-            <p><strong>Note:</strong> Unable to load recent data</p>
-          </div>
-        </div>
-      `;
+      document.getElementById('earthquake-total-count').textContent = 'N/A';
+      document.getElementById('earthquake-last-update').textContent = 'Unable to load';
+      document.getElementById('earthquake-list').innerHTML = 'Unable to load recent earthquake data';
     }
   }
 
   async loadLaunchData() {
-    const container = document.getElementById('launch-grid');
-    if (!container) return;
+    const upcomingContainer = document.getElementById('upcoming-launches-info');
+    const statsContainer = document.getElementById('launch-stats-info');
+    if (!upcomingContainer || !statsContainer) return;
 
     try {
       const [upcomingLaunches, latestLaunch] = await Promise.all([
@@ -833,73 +758,68 @@ class CosmosLiveApp {
         apiClient.getLatestLaunch()
       ]);
 
-      let html = '';
-
-      if (latestLaunch) {
-        html += `
-          <div class="data-card launch-highlight">
-            <div class="card-title">Latest SpaceX Launch</div>
-            <div class="card-content">
-              <p><strong>Mission:</strong> ${latestLaunch.name || 'N/A'}</p>
-              <p><strong>Date:</strong> ${new Date(latestLaunch.date_local).toLocaleDateString()}</p>
-              <p><strong>Success:</strong> ${latestLaunch.success ? '✅' : '❌'}</p>
-              <p><strong>Rocket:</strong> ${latestLaunch.rocket || 'N/A'}</p>
-            </div>
-          </div>
-        `;
-      }
-
       if (upcomingLaunches && upcomingLaunches.results) {
-        const nextLaunches = upcomingLaunches.results.slice(0, 3);
-        nextLaunches.forEach(launch => {
-          html += `
-            <div class="data-card">
-              <div class="card-title">${launch.name || 'Upcoming Launch'}</div>
-              <div class="card-content">
-                <p><strong>Date:</strong> ${new Date(launch.net).toLocaleDateString()}</p>
-                <p><strong>Provider:</strong> ${launch.launch_service_provider?.name || 'N/A'}</p>
-                <p><strong>Status:</strong> ${launch.status?.name || 'N/A'}</p>
-              </div>
-            </div>
-          `;
-        });
+        const nextLaunch = upcomingLaunches.results[0];
+        if (nextLaunch) {
+          document.getElementById('next-launch-name').textContent = nextLaunch.name || 'N/A';
+          document.getElementById('next-launch-provider').textContent = nextLaunch.launch_service_provider?.name || 'N/A';
+          document.getElementById('next-launch-date').textContent = new Date(nextLaunch.net).toLocaleDateString();
+          document.getElementById('next-launch-status').textContent = nextLaunch.status?.name || 'N/A';
+        }
+        
+        // Update launch statistics
+        const currentYear = new Date().getFullYear();
+        document.getElementById('launch-year').textContent = currentYear;
+        document.getElementById('launch-upcoming-count').textContent = upcomingLaunches.count || upcomingLaunches.results.length;
+        document.getElementById('launch-total-count').textContent = upcomingLaunches.count || 'N/A';
       }
 
-      container.innerHTML = html || '<div class="error">Unable to load launch data</div>';
 
     } catch (error) {
       console.error('Error loading launch data:', error);
-      container.innerHTML = '<div class="error">Error loading launch data</div>';
+      document.getElementById('next-launch-name').textContent = 'N/A';
+      document.getElementById('next-launch-provider').textContent = 'N/A';
+      document.getElementById('next-launch-date').textContent = 'N/A';
+      document.getElementById('next-launch-status').textContent = 'N/A';
     }
   }
 
   async loadImageryData() {
-    const container = document.getElementById('imagery-grid');
-    if (!container) return;
+    const infoContainer = document.getElementById('nasa-apod-info');
+    const imageContainer = document.getElementById('nasa-apod-image');
+    if (!infoContainer || !imageContainer) return;
 
     try {
       const apodData = await apiClient.getNASAAPOD();
       
       if (apodData) {
-        const html = `
-          <div class="data-card">
-            <div class="card-title">NASA Astronomy Picture of the Day</div>
-            <div class="card-content">
-              <p><strong>Title:</strong> ${apodData.title || 'N/A'}</p>
-              <p><strong>Date:</strong> ${apodData.date || 'N/A'}</p>
-              <p><strong>Explanation:</strong> ${apodData.explanation ? apodData.explanation.substring(0, 200) + '...' : 'N/A'}</p>
-              ${apodData.url ? `<img src="${apodData.url}" alt="${apodData.title}" style="max-width: 100%; height: auto; margin-top: 1rem; border-radius: 10px;">` : ''}
-            </div>
-          </div>
-        `;
-        container.innerHTML = html;
+        document.getElementById('apod-title').textContent = apodData.title || 'N/A';
+        document.getElementById('apod-date').textContent = apodData.date || 'N/A';
+        document.getElementById('apod-copyright').textContent = apodData.copyright || 'NASA';
+        document.getElementById('apod-explanation').textContent = apodData.explanation ? 
+          (apodData.explanation.length > 200 ? apodData.explanation.substring(0, 200) + '...' : apodData.explanation) : 'N/A';
+        
+        if (apodData.url) {
+          const img = document.getElementById('apod-image');
+          img.src = apodData.url;
+          img.alt = apodData.title || 'NASA APOD';
+          img.onerror = function() {
+            this.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300"><rect width="400" height="300" fill="%23f3f4f6"/><text x="200" y="150" text-anchor="middle" fill="%236b7280" font-family="Arial" font-size="16">NASA APOD Image</text></svg>';
+          };
+        }
       } else {
-        container.innerHTML = '<div class="error">Unable to load NASA imagery</div>';
+        document.getElementById('apod-title').textContent = 'N/A';
+        document.getElementById('apod-date').textContent = 'N/A';
+        document.getElementById('apod-copyright').textContent = 'N/A';
+        document.getElementById('apod-explanation').textContent = 'Unable to load NASA imagery';
       }
 
     } catch (error) {
       console.error('Error loading imagery data:', error);
-      container.innerHTML = '<div class="error">Error loading NASA imagery</div>';
+      document.getElementById('apod-title').textContent = 'Error';
+      document.getElementById('apod-date').textContent = 'Error';
+      document.getElementById('apod-copyright').textContent = 'Error';
+      document.getElementById('apod-explanation').textContent = 'Error loading NASA imagery';
     }
   }
 
@@ -980,8 +900,8 @@ class CosmosLiveApp {
 
     const paginationDots = document.querySelectorAll('.pagination-dot');
     const slides = document.querySelectorAll('.testimonial-slide');
-    const testimonialsSection = document.querySelector('.testimonials-section');
     const slider = document.querySelector('.testimonials-slider');
+    const testimonialsSection = document.querySelector('.testimonials-section');
     
     if (!slides.length || !paginationDots.length || !slider) {
       console.warn("No slides, dots, or slider found for carousel.");
@@ -997,11 +917,7 @@ class CosmosLiveApp {
       
       // Update pagination dots
       paginationDots.forEach((dot, index) => {
-        if (index === validIndex) {
-          dot.classList.add('active');
-        } else {
-          dot.classList.remove('active');
-        }
+        dot.classList.toggle('active', index === validIndex);
       });
       
       this.carousel.currentSlide = validIndex;
@@ -1116,9 +1032,10 @@ class CosmosLiveApp {
     // Keyboard navigation
     document.addEventListener('keydown', (e) => {
       // Only handle keys when testimonials section is visible
+      if (!testimonialsSection) return;
+      
       const rect = testimonialsSection.getBoundingClientRect();
       const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
-      
       if (!isVisible) return;
       
       switch (e.key) {
@@ -1194,16 +1111,6 @@ class CosmosLiveApp {
     }
   }
 
-  async getUSGSVersion() {
-    try {
-      const response = await fetch('https://earthquake.usgs.gov/fdsnws/event/1/version');
-      const version = await response.text();
-      return version.trim();
-    } catch (error) {
-      console.error('Error fetching USGS version:', error);
-      return 'Unknown';
-    }
-  }
 }
 
 // Initialize the app when DOM is loaded
