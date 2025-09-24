@@ -9,8 +9,8 @@ class APIClient {
         rockets: 'https://api.spacexdata.com/v4/rockets'
       },
       iss: {
-        location: 'https://api.open-notify.org/iss-now.json',
-        astronauts: 'https://api.open-notify.org/astros.json'
+        location: '/api/iss-now',
+        astronauts: '/api/astros'
       },
       nasa: {
         apod: 'https://api.nasa.gov/planetary/apod?api_key=NNKOjkoul8n1CH18TWA9gwngW1s1SmjESPjNoUFo'
