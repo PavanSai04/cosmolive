@@ -4,9 +4,9 @@ class APIClient {
     this.baseURL = '';
     this.endpoints = {
       spacex: {
-        company: 'https://api.spacex.land/rest/company',
-        launches: 'https://api.spacex.land/rest/launches',
-        rockets: 'https://api.spacex.land/rest/rockets'
+        company: 'https://api.spacexdata.com/v4/company',
+        launches: 'https://api.spacexdata.com/v4/launches',
+        rockets: 'https://api.spacexdata.com/v4/rockets'
       },
       iss: {
         location: 'http://api.open-notify.org/iss-now.json',
