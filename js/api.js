@@ -94,7 +94,7 @@ class APIClient {
   // ISS API methods
   async getISSLocation() {
     try {
-      return await this.fetchWithTimeout(this.endpoints.iss.location);
+      return await this.fetchWithTimeout(this.endpoints.iss.location, {}, 20000);
     } catch (error) {
       console.error('Error fetching ISS location:', error);
       return null;
@@ -103,7 +103,7 @@ class APIClient {
 
   async getISSAstronauts() {
     try {
-      return await this.fetchWithTimeout(this.endpoints.iss.astronauts);
+      return await this.fetchWithTimeout(this.endpoints.iss.astronauts, {}, 20000);
     } catch (error) {
       console.error('Error fetching ISS astronauts:', error);
       return null;
