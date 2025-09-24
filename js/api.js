@@ -13,7 +13,7 @@ class APIClient {
         astronauts: 'https://api.open-notify.org/astros.json'
       },
       nasa: {
-        apod: 'https://api.nasa.gov/planetary/apod?api_key=DEMO_KEY'
+        apod: 'https://api.nasa.gov/planetary/apod?api_key=NNKOjkoul8n1CH18TWA9gwngW1s1SmjESPjNoUFo'
       },
       launches: {
         upcoming: 'https://ll.thespacedevs.com/2.2.0/launch/upcoming/',
